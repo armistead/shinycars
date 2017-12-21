@@ -1,0 +1,64 @@
+---
+title: "Shiny Cars, Shiny Apps"
+author: "armistead"
+date: "December 11, 2017"
+output: ioslides_presentation
+runtime: shiny
+fontsize: 8 pt
+---
+## Intro
+Say you want to buy a car, but you don't know what type. You are really focused on mileage. How do the different types of cars measure up? Well let's find out! By the end of this, you might understand why I recently purchased a hybrid. First we load the package and, of course, our happy friends from the Tidy Verse.
+```{r library, echo=TRUE, smaller = TRUE}
+## first things first get your packages
+library(shiny)
+library(tidyverse)
+```
+
+## Get Data
+Now let's get our data in order. We are going to use a template created by Hadley Wickham and the RStudio team. The plot is mainly based off of the example available in the book R for Data Science. It's a great read and available here: http://r4ds.had.co.nz/
+```{r data, echo=TRUE, smaller = TRUE}
+data <- as.tibble(mpg)
+carclass <- unique(mpg$class)
+```
+
+## Inputs
+The best part about Shiny is that you don't need to learn HTML or java. With just a few lines of code, we create a dashboard based on the "mpg" dataset.
+```{r ui, echo=TRUE, smaller = TRUE}
+ui <- fluidPage(
+        titlePanel("Fuel efficiency and Car Size"), ##always need a simple title.
+        sidebarLayout( ##this applies to the entire webpage, so make sure you include MainPanel below inside the parentheses.
+                sidebarPanel( ##here we set the input area
+                        checkboxGroupInput("group", "Class", ##based on type of car.
+                             choices=carclass, selected = carclass)
+                ),
+        mainPanel(
+                plotOutput("plot") ##send the plot to the main section of the webpage.
+        ))
+)
+```
+
+## Plot
+Finally we create the plot based on the inputs in the sidebar panel. Save yourself some time by using the pipe operator %>%.
+```{r create, echo=TRUE, smaller = TRUE}
+server <- function(input, output) { ##inputs set above and outputs set below
+        output$plot <- renderPlot({
+                filtered <- data %>%
+                        filter(data$class %in% input$group
+                        )
+                ggplot(filtered, aes(displ, hwy)) +
+                geom_point(aes(color = class)) + ##in case the user selects multiple car types, we want to color each one differently.
+                geom_smooth(se = FALSE) + ##add a smoothing line for reference
+                labs(
+                        title = "Fuel efficiency falls as engine size rises",
+                        subtitle = "Or why I bought a Hybrid",
+                        caption = "Data from fueleconomy.gov. Thanks to Hadley Wickham and RStudio for the template"
+                )
+        })
+}
+```
+
+## Deploy
+```{r shiny, smaller = TRUE}
+shinyApp(ui = ui, server = server)
+```
+Lastly we deploy our Shiny app. Hope you find this tool as useful as I did buying a hybrid and learning Shiny.
